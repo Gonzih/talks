@@ -1,0 +1,121 @@
+WASM
+What about it?
+2 Jan 2018
+Tags: wasm, golang
+
+Max Gonzih
+Kirasystems
+gonzih@gmail.com
+https://gonzih.me
+@Gonzih
+
+* What is WASM?
+
+.image webassembly.svg
+
+* What is WASM?
+- binary instruction format
+- stack-based VM
+- targeting web and server side deployments
+
+* Why does it matter?
+
+- less JavaScript on the Web
+- without using any transpilers
+- better performance
+
+* Running go on WASM
+
+- Available since 1.11
+- Adds GOOS=js and GOARCH=wasm variables to the compiler
+- Interop is implemented using "syscall/js"
+
+* Getting JS helper
+
+  curl https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.js > wasm_exec.js
+
+* Getting JS helper
+
+`wasm_exec.js`
+
+- Unifies Node.js and browser WASM APIs in to one JS object called Go
+- Sets up JS -> Go interop
+
+  const setInt64 = (addr, v) => {
+    mem().setUint32(addr + 0, v, true);
+    mem().setUint32(addr + 4, Math.floor(v / 4294967296), true);
+  }
+
+* Getting JS helper
+
+`wasm_exec.js`
+
+- Sets up funcs from "syscall/js" pagkage on Go side
+
+  // func valueGet(v ref, p string) ref
+  "syscall/js.valueGet": (sp) => {
+    storeValue(sp + 32, Reflect.get(loadValue(sp + 8), loadString(sp + 16)));
+  },
+
+
+* Getting HTML template
+
+  curl https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.html > wasm_exec.html
+
+* Getting HTML template
+
+`wash_exec.html` Demonstrates how to put this together
+
+- on JS side
+
+  const go = new Go();
+  ...
+  WebAssembly.instantiateStreaming(...).then((result) => {
+      mod = result.module;
+      inst = result.instance;
+
+  });
+
+  async function run() {
+    await go.run(inst);
+    ...
+  }
+
+- and HTML side
+
+  <button onClick="run();" id="runButton" disabled>Run</button>
+
+* Finally some go code
+
+  package main
+
+  import (
+    "fmt"
+  )
+
+  func main() {
+    fmt.Println("Hello Wasm!")
+  }
+
+
+* Compiling it
+
+  GOARCH=wasm GOOS=js go build -o test.wasm
+
+
+* Running it
+
+Well, *test.wasm* needs to be loaded with Content-Type header set to *application/wasm*
+
+What shall we do?
+
+* Let's put together small file server
+
+.code server.go
+
+
+* The Future is here
+
+.image wasm-corp.png
+
+# vim: ts=2:sts=2:sw=2:expandtab
