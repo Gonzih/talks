@@ -1,9 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
+import "syscall/js"
 
 func main() {
-	fmt.Println("Hello Wasm!")
+	js.Global().Call("alert", "Hello Wasm!")
 }
