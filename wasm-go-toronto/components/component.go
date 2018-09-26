@@ -12,6 +12,7 @@ type Component struct {
 	Template string
 	ID       string
 	Tree     *El
+	OldVDom  *VNode
 }
 
 func NewComponent(templateID string) *Component {
@@ -59,10 +60,13 @@ func (cmp *Component) String() string {
 
 func (cmp *Component) RenderTo(rootID string) {
 	changes := make([]Change, 0)
-	cmp.RenderToVDom().Diff(nil, &changes)
+	vdom := cmp.RenderToVDom()
+	vdom.Diff(cmp.OldVDom, &changes)
 
 	for _, change := range changes {
 		el := change.NewNode.DomElement()
 		js.Global().Get("document").Call("getElementById", rootID).Call("appendChild", el)
 	}
+
+	cmp.OldVDom = vdom
 }
