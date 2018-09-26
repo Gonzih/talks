@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"syscall/js"
 
 	"github.com/google/uuid"
 	"golang.org/x/net/html"
@@ -43,15 +44,25 @@ func (cmp *Component) Debug() {
 	must(err)
 }
 
-func (cmp *Component) String() string {
+func (cmp *Component) RenderToVDom() *VNode {
 	vRenderer := &VDomRenderer{}
 
 	vdom, err := vRenderer.Render(cmp.Tree)
 	must(err)
 
-	return vdom.String()
+	return vdom
+}
+
+func (cmp *Component) String() string {
+	return cmp.RenderToVDom().String()
 }
 
 func (cmp *Component) RenderTo(rootID string) {
-	must(dom.SetInnerHTMLByID(rootID, cmp.String()))
+	changes := make([]Change, 0)
+	cmp.RenderToVDom().Diff(nil, &changes)
+
+	for _, change := range changes {
+		el := change.NewNode.DomElement()
+		js.Global().Get("document").Call("getElementById", rootID).Call("appendChild", el)
+	}
 }

@@ -43,7 +43,7 @@ func ConstructAnElement(tt html.TokenType, z *html.Tokenizer) *El {
 				t := z.Token()
 				data := strings.Trim(t.Data, "\r\n ")
 				if len(data) > 0 {
-					child := &El{Type: TEXT_TYPE, NodeValue: data}
+					child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
 					parent.Children = append(parent.Children, child)
 				}
 			case tt == html.EndTagToken:
