@@ -1,12 +1,8 @@
 package main
 
-import (
-	"golang.org/x/net/html"
-)
-
 type El struct {
 	Type        string
-	Attr        []html.Attribute
+	Attr        []*HTMLAttr
 	NodeValue   string
 	Children    []*El
 	SelfClosing bool

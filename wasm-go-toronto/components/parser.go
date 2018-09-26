@@ -18,7 +18,13 @@ func ConstructAnElement(tt html.TokenType, z *html.Tokenizer) *El {
 	parent := &El{}
 
 	parent.Type = token.Data
-	parent.Attr = token.Attr
+
+	for _, attr := range token.Attr {
+		parent.Attr = append(parent.Attr, &HTMLAttr{
+			Key: attr.Key,
+			Val: attr.Val,
+		})
+	}
 
 	if tt != html.SelfClosingTagToken {
 		for {

@@ -4,7 +4,7 @@ import "fmt"
 
 type VNode struct {
 	Tag      string
-	Attr     map[string]string
+	Attr     []*HTMLAttr
 	Data     string
 	Children []*VNode
 }
@@ -17,8 +17,8 @@ func (vn *VNode) String() string {
 		out = vn.Data
 	default:
 		var attrs string
-		for key, val := range vn.Attr {
-			attrs += fmt.Sprintf(` %s="%s"`, key, val)
+		for _, attr := range vn.Attr {
+			attrs += fmt.Sprintf(` %s="%s"`, attr.Key, attr.Val)
 		}
 		out += fmt.Sprintf("<%s%s>", vn.Tag, attrs)
 		for _, child := range vn.Children {
@@ -39,9 +39,12 @@ type VDomRenderer struct {
 
 func (rr *VDomRenderer) Render(el *El) (*VNode, error) {
 	node := &VNode{}
-	node.Attr = make(map[string]string, 0)
+
 	for _, attr := range el.Attr {
-		node.Attr[attr.Key] = attr.Val
+		node.Attr = append(node.Attr, &HTMLAttr{
+			Key: attr.Key,
+			Val: attr.Val,
+		})
 	}
 
 	switch el.Type {
