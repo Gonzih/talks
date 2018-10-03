@@ -4,7 +4,6 @@ Should we be excited? What is possible?
 18 Oct 2018
 
 Max Gonzih
-Kirasystems
 
 https://gonzih.me
 gonzih@gmail.com
@@ -14,20 +13,34 @@ gonzih@gmail.com
 
 .html tweaks.html
 
-.image webassembly.svg
+.image webassembly.svg _ 700
 
 * What is WASM?
 - binary instruction format
 - stack-based VM
-- targeting web and server side deployments
+- platform agnostic
 
 * Why does it matter?
 
 - less JavaScript on the Web
 - less transpilers
 - almost native level of performance
+- universal binary format
+- faster load time compared to JavaScript parsing time
 
-* Running Go on WASM
+* Possibilities
+
+[[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][https://blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
+
+.image cloudflareworkers.png
+
+* Possibilities
+
+[[https://github.com/rianhunter/wasmjit][https://github.com/rianhunter/wasmjit]]
+
+.image wasmjit.png
+
+* Compiling Go to WASM
 
 - Available since 1.11
 - Adds `GOOS=js` and `GOARCH=wasm` variables to the compiler
@@ -112,7 +125,7 @@ Or
 
 * Running it
 
-Well, *test.wasm* needs to be loaded with Content-Type header set to *application/wasm*
+In a browser *test.wasm* file needs to be loaded with *Content-Type* equal to *application/wasm*
 
 What shall we do?
 
@@ -124,7 +137,7 @@ What shall we do?
 
 * The Future is here
 
-.image wasm-corp.png
+.image wasm-corp.png _ 800
 
 
 * Should we be excited?
@@ -146,17 +159,56 @@ Yes, but...
 
 * Going crazy
 
-[[https://github.com/Gonzih/wasm-components-go][https://github.com/Gonzih/wasm-components-go]]
+What would it take to create a frontend framework in Go for WebAssembly?
 
-* UI Components in Go
+* Web GOmponents
 
-- Attempt to create something Vue.js inspired
+- Attempt to create minimalistic frontend framework
+- More about doing this in golang
+- Less about making efficient framework
+
+* Use <template> tag as our templating solution
+
+    <template id="rootTemplate">
+        <div>
+            <span>Link was clicked {{ Counter }} times</span>
+            <a @click="ClickHandler">Click me</a>
+        </div>
+    </template>
 
 * Parse <template> HTML using net/html
-* Everything is a component
+
+    template, err := dom.GetInnerHTMLByID(templateID)
+    r := strings.NewReader(cmp.Template)
+    z := html.NewTokenizer(r)
+
+    tt := z.Next()
+    switch {
+    ...
+    case tt == html.StartTagToken:
+      el := &El{}
+      el.Type = token.Data
+      for _, attr := range token.Attr {
+        ...
+      }
+      ...
+    }
+
+* Handle text nodes
+
+   case tt == html.TextToken:
+     t := z.Token()
+     child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
+     el.Children = append(parent.Children, child)
+
 * State stored in Store
+
 * Subscriptions using reflections on components
+
 * Components generate VDOM
+	vdom := cmp.RenderToVDom()
+	vdom.Diff(cmp.OldVDom, &changes)
+
 * VDOM can be rendered to string
 * VDOM can be diffed to generate changeset
 * Changeset can be executed to modify real dom

@@ -6,10 +6,11 @@ import (
 )
 
 type VNode struct {
-	Tag      string
-	Attr     []*HTMLAttr
-	Data     string
-	Children []*VNode
+	Tag       string
+	Attr      []HTMLAttribute
+	Callbacks map[string]js.Callback
+	Data      string
+	Children  []*VNode
 }
 
 func (vn *VNode) String() string {
@@ -43,7 +44,11 @@ func (vn *VNode) DomElement() js.Value {
 		element = js.Global().Get("document").Call("createElement", vn.Tag)
 
 		for _, attr := range vn.Attr {
-			element.Set(attr.Key, attr.Val)
+			element.Set(attr.Key(), attr.Val())
+		}
+
+		for key, callback := range vn.Callbacks {
+			element.Call("addEventListener", key, callback)
 		}
 
 		for _, child := range vn.Children {
@@ -70,12 +75,8 @@ type VDomRenderer struct {
 func (rr *VDomRenderer) Render(el *El) (*VNode, error) {
 	node := &VNode{}
 
-	for _, attr := range el.Attr {
-		node.Attr = append(node.Attr, &HTMLAttr{
-			Key: attr.Key,
-			Val: attr.Val,
-		})
-	}
+	node.Attr = el.Attr
+	node.Callbacks = el.Callbacks
 
 	switch el.Type {
 	case TEXT_TYPE:

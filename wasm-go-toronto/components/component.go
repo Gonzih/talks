@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strings"
 	"syscall/js"
 
@@ -13,10 +14,14 @@ type Component struct {
 	ID       string
 	Tree     *El
 	OldVDom  *VNode
+	Computed map[string]func() string
+	Methods  map[string]func(js.Value)
 }
 
-func NewComponent(templateID string) *Component {
+func NewComponent(templateID string, methods map[string]func(js.Value), computed map[string]func() string) *Component {
 	cmp := &Component{}
+	cmp.Methods = methods
+	cmp.Computed = computed
 
 	template, err := dom.GetInnerHTMLByID(templateID)
 	must(err)
@@ -27,11 +32,11 @@ func NewComponent(templateID string) *Component {
 	r := strings.NewReader(cmp.Template)
 	z := html.NewTokenizer(r)
 
-	el := ParseHTML(z)
+	el := ParseHTML(z, cmp)
 
-	el.Attr = append(el.Attr, &HTMLAttr{
-		Key: "go-id",
-		Val: cmp.ID,
+	el.Attr = append(el.Attr, &StaticAttribute{
+		K: "go-id",
+		V: cmp.ID,
 	})
 
 	cmp.Tree = el
@@ -65,8 +70,19 @@ func (cmp *Component) RenderTo(rootID string) {
 
 	for _, change := range changes {
 		el := change.NewNode.DomElement()
-		js.Global().Get("document").Call("getElementById", rootID).Call("appendChild", el)
+		root := js.Global().Get("document").Call("getElementById", rootID)
+		root.Set("innerHTML", "")
+		root.Call("appendChild", el)
 	}
 
-	cmp.OldVDom = vdom
+	// cmp.OldVDom = vdom
+}
+
+func (cmp *Component) MountTo(rootID string) {
+	cmp.RenderTo(rootID)
+
+	for range notificationChan {
+		cmp.RenderTo(rootID)
+		log.Printf("Doing remount")
+	}
 }

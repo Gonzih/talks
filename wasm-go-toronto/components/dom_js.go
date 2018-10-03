@@ -1,6 +1,9 @@
 package main
 
-import "syscall/js"
+import (
+	"fmt"
+	"syscall/js"
+)
 
 type DomHelperer interface {
 	SetInnerHTMLByID(string, string) error
@@ -21,6 +24,12 @@ func (d *DomHelper) SetInnerHTMLByID(id, content string) error {
 
 func (d *DomHelper) GetInnerHTMLByID(id string) (string, error) {
 	content := js.Global().Get("document").Call("getElementById", id).Get("innerHTML").String()
+
+	return content, nil
+}
+
+func (d *DomHelper) GetElementByGOID(id string) (js.Value, error) {
+	content := js.Global().Get("document").Call("querySelector", fmt.Sprintf("[go-id=%s]", id))
 
 	return content, nil
 }

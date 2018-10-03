@@ -3,5 +3,5 @@ package main
 import "syscall/js"
 
 func main() {
-	js.Global().Call("alert", "Hello Wasm!")
+	js.Global().Call("alert", "Hello from Wasm!")
 }
