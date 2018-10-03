@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 	"syscall/js"
 
@@ -83,6 +82,5 @@ func (cmp *Component) MountTo(rootID string) {
 
 	for range notificationChan {
 		cmp.RenderTo(rootID)
-		log.Printf("Doing remount")
 	}
 }

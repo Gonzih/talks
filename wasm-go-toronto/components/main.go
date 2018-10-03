@@ -20,7 +20,6 @@ func main() {
 		"ClickHandler": func(event js.Value) {
 			c := store.Get("counter").(int)
 			store.Set("counter", c+1)
-			log.Println(c)
 		},
 	}
 

@@ -13,38 +13,41 @@ gonzih@gmail.com
 
 .html tweaks.html
 
-.image webassembly.svg _ 700
+.image webassembly.svg _ 800
 
 * What is WASM?
 - binary instruction format
 - stack-based VM
-- platform agnostic
+- targeting web and server side deployments
 
 * Why does it matter?
 
 - less JavaScript on the Web
 - less transpilers
 - almost native level of performance
-- universal binary format
-- faster load time compared to JavaScript parsing time
 
 * Possibilities
+
+Using WebAssembly on a serverless platform
 
 [[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][https://blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
 
-.image cloudflareworkers.png
-
 * Possibilities
+
+Kernel Mode WebAssembly Runtime for Linux
 
 [[https://github.com/rianhunter/wasmjit][https://github.com/rianhunter/wasmjit]]
 
-.image wasmjit.png
+> Wasmjit is a small embeddable WebAssembly runtime. Its core is written in C90 and is easily portable to most environments.
 
-* Compiling Go to WASM
+
+* Running Go on WASM
 
 - Available since 1.11
 - Adds `GOOS=js` and `GOARCH=wasm` variables to the compiler
 - Interop is implemented using `syscall/js` package
+
+.image packagejs.png
 
 * Getting JS helper
 
@@ -125,7 +128,7 @@ Or
 
 * Running it
 
-In a browser *test.wasm* file needs to be loaded with *Content-Type* equal to *application/wasm*
+Well, *test.wasm* needs to be loaded with Content-Type header set to *application/wasm*
 
 What shall we do?
 
@@ -159,20 +162,17 @@ Yes, but...
 
 * Going crazy
 
-What would it take to create a frontend framework in Go for WebAssembly?
+[[https://github.com/Gonzih/wasm-components-go][https://github.com/Gonzih/wasm-components-go]]
 
-* Web GOmponents
+* UI Components in Go
 
-- Attempt to create minimalistic frontend framework
-- More about doing this in golang
-- Less about making efficient framework
+- Attempt to create something Vue.js inspired
 
 * Use <template> tag as our templating solution
 
     <template id="rootTemplate">
         <div>
-            <span>Link was clicked {{ Counter }} times</span>
-            <a @click="ClickHandler">Click me</a>
+            <a href="http://google.com" target="_blank">Hello</a> world!
         </div>
     </template>
 
