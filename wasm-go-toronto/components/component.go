@@ -63,18 +63,24 @@ func (cmp *Component) String() string {
 }
 
 func (cmp *Component) RenderTo(rootID string) {
+	if cmp.OldVDom == nil {
+		cmp.OldVDom = cmp.RenderToVDom()
+		el := cmp.OldVDom.DomElement()
+		root := js.Global().Get("document").Call("getElementById", rootID)
+		root.Set("innerHTML", "")
+		root.Call("appendChild", el)
+		return
+	}
+
 	changes := make([]Change, 0)
 	vdom := cmp.RenderToVDom()
 	vdom.Diff(cmp.OldVDom, &changes)
 
 	for _, change := range changes {
-		el := change.NewNode.DomElement()
-		root := js.Global().Get("document").Call("getElementById", rootID)
-		root.Set("innerHTML", "")
-		root.Call("appendChild", el)
+		change.Apply()
 	}
 
-	// cmp.OldVDom = vdom
+	cmp.OldVDom = vdom
 }
 
 func (cmp *Component) MountTo(rootID string) {

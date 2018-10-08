@@ -7,10 +7,12 @@ import (
 
 type VNode struct {
 	Tag       string
+	ID        string
 	Attr      []HTMLAttribute
 	Callbacks map[string]js.Callback
 	Data      string
 	Children  []*VNode
+	domNode   *js.Value
 }
 
 func (vn *VNode) String() string {
@@ -35,38 +37,75 @@ func (vn *VNode) String() string {
 }
 
 func (vn *VNode) DomElement() js.Value {
-	var element js.Value
+	if vn.domNode == nil {
+		var element js.Value
 
-	switch vn.Tag {
-	case TEXT_TYPE:
-		element = js.Global().Get("document").Call("createTextNode", vn.Data)
-	default:
-		element = js.Global().Get("document").Call("createElement", vn.Tag)
+		switch vn.Tag {
+		case TEXT_TYPE:
+			element = js.Global().Get("document").Call("createTextNode", vn.Data)
+		default:
+			element = js.Global().Get("document").Call("createElement", vn.Tag)
 
-		for _, attr := range vn.Attr {
-			element.Set(attr.Key(), attr.Val())
+			for _, attr := range vn.Attr {
+				element.Set(attr.Key(), attr.Val())
+			}
+
+			for key, callback := range vn.Callbacks {
+				element.Call("addEventListener", key, callback)
+			}
+
+			for _, child := range vn.Children {
+				childEl := child.DomElement()
+				element.Call("appendChild", childEl)
+			}
 		}
 
-		for key, callback := range vn.Callbacks {
-			element.Call("addEventListener", key, callback)
-		}
-
-		for _, child := range vn.Children {
-			childEl := child.DomElement()
-			element.Call("appendChild", childEl)
-		}
+		vn.domNode = &element
 	}
 
-	return element
+	return *vn.domNode
 }
 
 func (newVD *VNode) Diff(oldVD *VNode, changeset *[]Change) {
-	if oldVD == nil {
+	newVD.domNode = oldVD.domNode
+
+	if oldVD.Tag != newVD.Tag {
 		*changeset = append(*changeset, Change{
-			Type:    "CREATE",
+			Type:    "REPLACE",
 			NewNode: newVD,
 		})
+		return
 	}
+
+	attributesToDeleteMap := make(map[string]bool, len(oldVD.Attr))
+
+	for _, attr := range oldVD.Attr {
+		attributesToDeleteMap[attr.Key()] = true
+	}
+
+	for _, attr := range newVD.Attr {
+		attributesToDeleteMap[attr.Key()] = false
+	}
+
+	attributesToDelete := make([]string, 0)
+
+	for k, v := range attributesToDeleteMap {
+		if v {
+			attributesToDelete = append(attributesToDelete, k)
+		}
+	}
+
+	*changeset = append(*changeset, Change{
+		Type:               "UPDATE",
+		domNode:            oldVD.domNode,
+		attributesToDelete: attributesToDelete,
+		NewNode:            newVD,
+	})
+
+	// go over children
+	// figure out which ones are new
+	// figure out which ones need to be deleted
+	// figure out which ones are old
 }
 
 type VDomRenderer struct {

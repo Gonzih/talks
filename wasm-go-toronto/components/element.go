@@ -17,3 +17,14 @@ func NewEl() *El {
 
 	return el
 }
+
+// ID is not really needed for now
+func (el *El) ID() string {
+	for _, attr := range el.Attr {
+		if attr.Key() == "go-id" {
+			return attr.Val()
+		}
+	}
+
+	return ""
+}

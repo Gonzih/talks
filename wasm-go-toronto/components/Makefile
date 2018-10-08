@@ -1,5 +1,6 @@
 build:
 	GOARCH=wasm GOOS=js go build -o test.wasm
+	@echo
 
 server-main:
 	env GO111MODULE=on go build -o server-main server/main.go
