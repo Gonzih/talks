@@ -165,6 +165,8 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 
 What about creating reactive frontend frameworking in golang? How hard can it be?
 
+[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
+
 * Use <template> tag as our templating solution
 
     <template id="rootTemplate">
@@ -389,5 +391,11 @@ Tells the browser that you wish to perform an animation and requests that the br
   }
 
 * DEMO
+
+* What is not there
+
+- Nested components
+- No branching in DSL (if-else)
+- No loops in DSL
 
 # vim: ts=2:sts=2:sw=2:expandtab
