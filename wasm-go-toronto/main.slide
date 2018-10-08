@@ -32,14 +32,15 @@ Using WebAssembly on a serverless platform
 
 [[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][https://blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
 
+.image cloudflareworkers.png
+
 * Possibilities
 
 Kernel Mode WebAssembly Runtime for Linux
 
 [[https://github.com/rianhunter/wasmjit][https://github.com/rianhunter/wasmjit]]
 
-> Wasmjit is a small embeddable WebAssembly runtime. Its core is written in C90 and is easily portable to most environments.
-
+.image wasmjit.png
 
 * Running Go on WASM
 
@@ -158,15 +159,11 @@ Yes, but...
 - No GOTO instruction, so Go has to generate a huge switch statement to resume goroutines
 - Binary size was not a priority for this release
 
-[[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
+More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
 
 * Going crazy
 
-[[https://github.com/Gonzih/wasm-components-go][https://github.com/Gonzih/wasm-components-go]]
-
-* UI Components in Go
-
-- Attempt to create something Vue.js inspired
+What about creating reactive frontend frameworking in golang? How hard can it be?
 
 * Use <template> tag as our templating solution
 
@@ -203,17 +200,62 @@ Yes, but...
 
 * State stored in Store
 
-* Subscriptions using reflections on components
+  type Store struct {
+    store map[string]interface{}
+  }
 
-* Components generate VDOM
-	vdom := cmp.RenderToVDom()
-	vdom.Diff(cmp.OldVDom, &changes)
+  func (s *Store) Set(k string, v interface{}) {
+    ...
+  }
 
-* VDOM can be rendered to string
-* VDOM can be diffed to generate changeset
-* Changeset can be executed to modify real dom
+  func (s *Store) Get(k string) interface{} {
+    ...
+  }
 
-<template>
-</template>
+* Computed properties
+
+  computed := map[string]func() string{
+    "Counter": func() string {
+      ...
+    },
+  }
+
+* Component methods
+
+  methods := map[string]func(js.Value){
+    "ClickHandler": func(event js.Value) {
+      ...
+    },
+  }
+
+* Creating a component
+
+  cmp := NewComponent("rootTemplate", methods, computed)
+  cmp.MountTo("root")
+
+* Rendering loop
+  func (cmp *Component) MountTo(rootID string) {
+    cmp.RenderTo(rootID)
+
+    for range notificationChan {
+      cmp.RenderTo(rootID)
+    }
+  }
+
+* VDOM diffing
+
+  changes := make([]Change, 0)
+  vdom := component.RenderToVDom()
+  vdom.Diff(component.OldVDom, &changes)
+
+* Diff details
+  //TODO
+
+* Applying changeset
+
+  // TODO
+  for _, change := range changes {
+    el := change.Apply()
+  }
 
 # vim: ts=2:sts=2:sw=2:expandtab
