@@ -21,6 +21,8 @@ license that can be found in the LICENSE file.
 
     <template id="rootTemplate">
         <div>
+            <span>Clicked {{ Count }} times</span>
+            <br/>
             <input type="button" :value="Counter" @click="ClickHandler"></input>
         </div>
     </template>
@@ -40,7 +42,6 @@ license that can be found in the LICENSE file.
 		WebAssembly.instantiateStreaming(fetch("test.wasm"), go.importObject).then((result) => {
 			mod = result.module;
 			inst = result.instance;
-			document.getElementById("runButton").disabled = false;
             run();
 		});
 
@@ -51,8 +52,6 @@ license that can be found in the LICENSE file.
 		}
 
 	</script>
-
-	<button onClick="run();" id="runButton" disabled>Run</button>
 </body>
 
 </html>

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"regexp"
 	"syscall/js"
 )
 
@@ -26,6 +28,20 @@ func (ch *Change) Apply() {
 }
 
 func (ch *Change) update() {
+	if ch.NewNode.Tag == TEXT_TYPE {
+		content := ch.NewNode.Data
+		for _, attr := range ch.NewNode.Attr {
+			k := attr.Key()
+			v := attr.Val()
+			re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, k))
+			content = re.ReplaceAllString(content, v)
+		}
+
+		ch.domNode.Set("textContent", content)
+
+		return
+	}
+
 	for _, attrName := range ch.attributesToDelete {
 		ch.domNode.Call("removeAttribute", attrName)
 	}

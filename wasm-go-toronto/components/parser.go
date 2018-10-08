@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 	"syscall/js"
 
@@ -87,6 +88,16 @@ func ConstructAnElement(tt html.TokenType, z *html.Tokenizer, c *Component) *El 
 					child := NewEl()
 					child.Type = TEXT_TYPE
 					child.NodeValue = t.Data
+					for k, fn := range c.Computed {
+						re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, k))
+						if re.MatchString(child.NodeValue) {
+							at := &DynamicAttribute{
+								K:  k,
+								Fn: fn,
+							}
+							child.Attr = append(child.Attr, at)
+						}
+					}
 					parent.Children = append(parent.Children, child)
 				}
 			case tt == html.EndTagToken:

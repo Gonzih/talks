@@ -27,6 +27,9 @@ func main() {
 		"Counter": func() string {
 			return fmt.Sprintf("Clicked me %d times", store.Get("counter"))
 		},
+		"Count": func() string {
+			return fmt.Sprintf("%d", store.Get("counter"))
+		},
 	}
 
 	cmp := NewComponent("rootTemplate", methods, computed)
