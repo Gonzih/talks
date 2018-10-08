@@ -9,18 +9,20 @@ import (
 )
 
 type Component struct {
-	Template string
-	ID       string
-	Tree     *El
-	OldVDom  *VNode
-	Computed map[string]func() string
-	Methods  map[string]func(js.Value)
+	Template         string
+	ID               string
+	Tree             *El
+	OldVDom          *VNode
+	Computed         map[string]func() string
+	Methods          map[string]func(js.Value)
+	notificationChan chan bool
 }
 
 func NewComponent(templateID string, methods map[string]func(js.Value), computed map[string]func() string) *Component {
 	cmp := &Component{}
 	cmp.Methods = methods
 	cmp.Computed = computed
+	cmp.notificationChan = make(chan bool)
 
 	template, err := dom.GetInnerHTMLByID(templateID)
 	must(err)
@@ -65,7 +67,7 @@ func (cmp *Component) String() string {
 func (cmp *Component) RenderTo(rootID string) {
 	changes := make([]Change, 0)
 	vdom := cmp.RenderToVDom()
-	vdom.Diff(cmp.OldVDom, &changes, rootID)
+	vdom.Diff(cmp.OldVDom, &changes, rootID, nil)
 
 	for _, change := range changes {
 		change.Apply()
@@ -77,7 +79,14 @@ func (cmp *Component) RenderTo(rootID string) {
 func (cmp *Component) MountTo(rootID string) {
 	cmp.RenderTo(rootID)
 
-	for range notificationChan {
-		cmp.RenderTo(rootID)
+	for range cmp.notificationChan {
+		var cb js.Callback
+
+		callback := js.NewCallback(func(_ []js.Value) {
+			cmp.RenderTo(rootID)
+			cb.Release()
+		})
+
+		js.Global().Get("window").Call("requestAnimationFrame", callback)
 	}
 }

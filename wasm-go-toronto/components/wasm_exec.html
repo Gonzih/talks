@@ -9,21 +9,32 @@ license that can be found in the LICENSE file.
 <head>
 	<meta charset="utf-8">
 	<title>Go wasm</title>
+<style>
+span.small {
+    color: black;
+    background: white;
+}
+span.large {
+    color: white;
+    background: black;
+}
+</style>
 </head>
 
 <body>
     <hr/>
 
-    <div id="root">
-    </div>
+    <div id="root0"></div>
+    <div id="root1"></div>
+    <div id="root2"></div>
 
     <hr/>
 
     <template id="rootTemplate">
         <div>
-            <span>Clicked {{ Count }} times</span>
+            <span :class="LabelClass">Clicked {{ Count }} times</span>
+            <input type="button" value="♡" @click="ClickHandler"></input>
             <br/>
-            <input type="button" :value="Counter" @click="ClickHandler"></input>
         </div>
     </template>
 

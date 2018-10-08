@@ -169,34 +169,11 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
     <template id="rootTemplate">
         <div>
-            <a href="http://google.com" target="_blank">Hello</a> world!
+            <span>Clicked {{ Count }} times</span>
+            <br/>
+            <input type="button" :value="Counter" @click="ClickHandler"></input>
         </div>
     </template>
-
-* Parse <template> HTML using net/html
-
-    template, err := dom.GetInnerHTMLByID(templateID)
-    r := strings.NewReader(cmp.Template)
-    z := html.NewTokenizer(r)
-
-    tt := z.Next()
-    switch {
-    ...
-    case tt == html.StartTagToken:
-      el := &El{}
-      el.Type = token.Data
-      for _, attr := range token.Attr {
-        ...
-      }
-      ...
-    }
-
-* Handle text nodes
-
-   case tt == html.TextToken:
-     t := z.Token()
-     child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
-     el.Children = append(parent.Children, child)
 
 * State stored in Store
 
@@ -212,15 +189,14 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     ...
   }
 
-* Computed properties
-
-  computed := map[string]func() string{
-    "Counter": func() string {
-      ...
-    },
+  func (s *Store) Subscribe(ch chan bool) {
+    ...
   }
 
-* Component methods
+
+* Create a new component
+
+  store := NewStore()
 
   methods := map[string]func(js.Value){
     "ClickHandler": func(event js.Value) {
@@ -228,34 +204,190 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     },
   }
 
-* Creating a component
+  computed := map[string]func() string{
+    "Counter": func() string {
+      ...
+    },
+  }
+
+  cmp := NewComponent("rootTemplate", methods, computed)
+  store.Subscribe(cmp.notificationChan)
+  cmp.MountTo("root")
+
+* Computed properties
+
+  computed := map[string]func() string{
+    "Counter": func() string {
+      return fmt.Sprintf("Clicked me %d times", store.Get("counter"))
+    },
+  }
+
+* Component methods
+
+  methods := map[string]func(js.Value){
+    "ClickHandler": func(event js.Value) {
+      c := store.Get("counter").(int)
+      store.Set("counter", c+1)
+    },
+  }
+
+* NewComponent function
+
+  cmp := NewComponent("rootTemplate", methods, computed)
+
+- Get template Inner HTML
+- Parse HTML in to tree of elements
+
+* Get template Inner HTML
+  // JavaScript
+  document.getElementById(templateID).innerHTML
+
+  // Go
+  js.Global().Get("document").Call("getElementById", templateID).Get("innerHTML").String()
+
+
+* Parse HTML in to tree of elements
+    r := strings.NewReader(templateData)
+    z := html.NewTokenizer(r)
+
+    tt := z.Next()
+    switch {
+    ...
+    case tt == html.StartTagToken:
+      el := &El{}
+      el.Type = token.Data
+      for _, attr := range token.Attr {
+        ...
+      }
+    }
+
+* Dynamic attributes
+
+  for _, attr := range token.Attr {
+    if strings.HasPrefix(attr.Key, ":") {
+      element.Attr = append(
+        element.Attr,
+        &DynamicAttribute{
+          K:  strings.Replace(attr.Key, ":", "", 1),
+          Fn: handler,
+        })
+    }
+
+  }
+
+* Event handlers
+
+  for _, attr := range token.Attr {
+    if strings.HasPrefix(attr.Key, "@") {
+      // handle event callback
+      callback := js.NewEventCallback(js.PreventDefault, method)
+      ...
+    }
+  }
+
+* Handle text nodes
+
+  case tt == html.TextToken:
+    t := z.Token()
+    child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
+    el.Children = append(parent.Children, child)
+
+* Dynamic attributes in text nodes
+
+  <span>This is a template for {{ Name }}</span>
+
+  for k, fn := range c.Computed {
+    re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, k))
+    if re.MatchString(child.NodeValue) {
+      at := &DynamicAttribute{
+        K:  k,
+        Fn: fn,
+      }
+      child.Attr = append(child.Attr, at)
+    }
+  }
+
+* Attaching component to DOM
 
   cmp := NewComponent("rootTemplate", methods, computed)
   cmp.MountTo("root")
 
-* Rendering loop
+* Rendering Loop
+
   func (cmp *Component) MountTo(rootID string) {
     cmp.RenderTo(rootID)
 
-    for range notificationChan {
-      cmp.RenderTo(rootID)
+    for range cmp.notificationChan {
+      var cb js.Callback
+
+      callback := js.NewCallback(func(_ []js.Value) {
+        cmp.RenderTo(rootID)
+        cb.Release()
+      })
+
+      js.Global().Get("window").Call("requestAnimationFrame", callback)
     }
   }
 
-* VDOM diffing
+* window.requestAnimationFrame()
 
-  changes := make([]Change, 0)
-  vdom := component.RenderToVDom()
-  vdom.Diff(component.OldVDom, &changes)
+Tells the browser that you wish to perform an animation and requests that the browser call a specified function to update an animation before the next repaint.
 
-* Diff details
-  //TODO
+* RenderTo function
 
-* Applying changeset
+  func (cmp *Component) RenderTo(rootID string) {
+    changes := make([]Change, 0)
+    vdom := component.RenderToVDom()
+    vdom.Diff(component.OldVDom, &changes, rootID)
+    ...
 
-  // TODO
+* Diff
+
+- If no old version of VDOM is prenent -> gerenare CREATE Change
+- Otherwise diff properties and create UPDATE Change
+
+* Applying changes
+
   for _, change := range changes {
-    el := change.Apply()
+    change.Apply()
   }
+
+* Applying changes
+
+  func (ch *Change) Apply() {
+    switch ch.Type {
+    case "CREATE":
+      ch.create()
+    case "UPDATE":
+      ch.update()
+    }
+  }
+
+* CREATE change
+  ch.parentNode.Call("appendChild", ch.domNode)
+
+* UPDATE change
+  for _, attrName := range ch.attributesToDelete {
+    ch.domNode.Call("removeAttribute", attrName)
+  }
+
+  for _, attr := range ch.NewNode.Attr {
+    log.Printf("setAttribute %s %s", attr.Key(), attr.Val())
+    ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
+  }
+
+* UPDATE change for text nodes
+
+  if ch.NewNode.Tag == TEXT_TYPE {
+    content := ch.NewNode.Data
+    for _, attr := range ch.NewNode.Attr {
+      re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, attr.Key()))
+      content = re.ReplaceAllString(content, attr.Val())
+    }
+
+    ch.domNode.Set("textContent", content)
+  }
+
+* DEMO
 
 # vim: ts=2:sts=2:sw=2:expandtab

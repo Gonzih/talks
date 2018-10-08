@@ -12,7 +12,7 @@ func must(err error) {
 	}
 }
 
-func main() {
+func newCmp() *Component {
 	store := NewStore()
 	store.Set("counter", 0)
 
@@ -24,16 +24,31 @@ func main() {
 	}
 
 	computed := map[string]func() string{
-		"Counter": func() string {
-			return fmt.Sprintf("Clicked me %d times", store.Get("counter"))
-		},
 		"Count": func() string {
 			return fmt.Sprintf("%d", store.Get("counter"))
+		},
+		"LabelClass": func() string {
+			c := store.Get("counter").(int)
+			if c < 10 {
+				return "small"
+			}
+
+			return "large"
 		},
 	}
 
 	cmp := NewComponent("rootTemplate", methods, computed)
-	cmp.MountTo("root")
+
+	store.Subscribe(cmp.notificationChan)
+
+	return cmp
+}
+
+func main() {
+	for i := 0; i < 3; i++ {
+		cmp := newCmp()
+		go cmp.MountTo(fmt.Sprintf("root%d", i))
+	}
 
 	// Render in to VDOM
 
