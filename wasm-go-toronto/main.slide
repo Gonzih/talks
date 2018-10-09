@@ -52,7 +52,7 @@ Kernel-space WebAssembly Runtime for Linux
 
 * Getting JS helper
 
-  curl https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.js > wasm_exec.js
+  curl "https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.js" > wasm_exec.js
 
 Or
 
@@ -84,7 +84,7 @@ Or
 
 * Getting HTML template
 
-  curl https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.html > wasm_exec.html
+  curl "https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.html" > wasm_exec.html
 
 Or
 
@@ -97,8 +97,8 @@ Or
 - on JS side
 
   const go = new Go();
-  ...
-  WebAssembly.instantiateStreaming(...).then((result) => {
+  // ...
+  WebAssembly.instantiateStreaming(url).then((result) => {
       mod = result.module;
       inst = result.instance;
 
@@ -106,7 +106,7 @@ Or
 
   async function run() {
     await go.run(inst);
-    ...
+    // ...
   }
 
 - and HTML side
@@ -133,7 +133,7 @@ Well, *test.wasm* needs to be loaded with Content-Type header set to *applicatio
 
 What shall we do?
 
-* Let's put together a small file server
+* Let's put together small file server
 
   package main
 
@@ -167,7 +167,7 @@ Hello World
 
 Yes, but...
 
-* But...
+* File size 😕
 
   $ l -lha test.wasm
   -rwxr-xr-x 1 gnzh gnzh 2.4M Sep 15 09:13 test.wasm*
@@ -203,15 +203,15 @@ What about creating reactive frontend frameworking in golang? How hard can it be
   }
 
   func (s *Store) Set(k string, v interface{}) {
-    ...
+    // ...
   }
 
   func (s *Store) Get(k string) interface{} {
-    ...
+    // ...
   }
 
   func (s *Store) Subscribe(ch chan bool) {
-    ...
+    // ...
   }
 
 
@@ -221,13 +221,13 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
   methods := map[string]func(js.Value){
     "ClickHandler": func(event js.Value) {
-      ...
+      // ...
     },
   }
 
   computed := map[string]func() string{
     "Counter": func() string {
-      ...
+      // ...
     },
   }
 
@@ -268,17 +268,17 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
 
 * Parse HTML in to tree of elements
+
     r := strings.NewReader(templateData)
     z := html.NewTokenizer(r)
 
     tt := z.Next()
     switch {
-    ...
     case tt == html.StartTagToken:
       el := &El{}
       el.Type = token.Data
       for _, attr := range token.Attr {
-        ...
+        // ...
       }
     }
 
@@ -300,9 +300,8 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
   for _, attr := range token.Attr {
     if strings.HasPrefix(attr.Key, "@") {
-      // handle event callback
       callback := js.NewEventCallback(js.PreventDefault, method)
-      ...
+      // ...
     }
   }
 
@@ -315,7 +314,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
 * Dynamic attributes in text nodes
 
-  <span>This is a template for {{ Name }}</span>
+  // <span>This is a template for {{ Name }}</span>
 
   for k, fn := range c.Computed {
     re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, k))
@@ -327,6 +326,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
       child.Attr = append(child.Attr, at)
     }
   }
+
 
 * Attaching component to DOM
 
@@ -360,7 +360,7 @@ Tells the browser that we wish to perform an animation and requests that the bro
     changes := make([]Change, 0)
     vdom := component.RenderToVDom()
     vdom.Diff(component.OldVDom, &changes, rootID)
-    ...
+    // ...
 
 * Diff
 
@@ -378,9 +378,9 @@ Tells the browser that we wish to perform an animation and requests that the bro
   func (ch *Change) Apply() {
     switch ch.Type {
     case "CREATE":
-      ...
+      // ...
     case "UPDATE":
-      ...
+      // ...
     }
   }
 
