@@ -5,7 +5,7 @@ Should we be excited? What is possible?
 
 Max Gonzih
 
-https://gonzih.me
+[[https://gonzih.me][gonzih.me]]
 gonzih@gmail.com
 @Gonzih
 
@@ -36,7 +36,7 @@ Using WebAssembly on a serverless platform
 
 * Possibilities
 
-Kernel Mode WebAssembly Runtime for Linux
+Kernel-space WebAssembly Runtime for Linux
 
 [[https://github.com/rianhunter/wasmjit][https://github.com/rianhunter/wasmjit]]
 
@@ -171,9 +171,9 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
     <template id="rootTemplate">
         <div>
-            <span>Clicked {{ Count }} times</span>
+            <span :class="LabelClass">Clicked {{ Count }} times</span>
+            <input type="button" value="♡" @click="ClickHandler"></input>
             <br/>
-            <input type="button" :value="Counter" @click="ClickHandler"></input>
         </div>
     </template>
 
@@ -397,5 +397,15 @@ Tells the browser that you wish to perform an animation and requests that the br
 - Nested components
 - No branching in DSL (if-else)
 - No loops in DSL
+- This is just a demo :)
+
+* Conclusion
+
+Go on WASM
+
+- It works
+- It's not perfect
+- Please give it a try!
+- Yay!
 
 # vim: ts=2:sts=2:sw=2:expandtab
