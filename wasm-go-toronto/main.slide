@@ -135,9 +135,28 @@ What shall we do?
 
 * Let's put together a small file server
 
-.code server.go
+  package main
+
+  import (
+    "log"
+    "net/http"
+  )
+
+  func wasmHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/wasm")
+    http.ServeFile(w, r, "test.wasm")
+  }
+
+  func main() {
+    mux := http.NewServeMux()
+    mux.Handle("/", http.FileServer(http.Dir(".")))
+    mux.HandleFunc("/test.wasm", wasmHandler)
+    log.Fatal(http.ListenAndServe(":3000", mux))
+  }
 
 * DEMO
+
+Hello World
 
 * The Future is here
 
@@ -241,11 +260,11 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 - Parse HTML in to tree of elements
 
 * Get template Inner HTML
-  // JavaScript
-  document.getElementById(templateID).innerHTML
-
   // Go
   js.Global().Get("document").Call("getElementById", templateID).Get("innerHTML").String()
+
+  // JavaScript
+  document.getElementById(templateID).innerHTML
 
 
 * Parse HTML in to tree of elements
@@ -333,7 +352,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
 
 * window.requestAnimationFrame()
 
-Tells the browser that you wish to perform an animation and requests that the browser call a specified function to update an animation before the next repaint.
+Tells the browser that we wish to perform an animation and requests that the browser call a specified function before the next repaint.
 
 * RenderTo function
 
@@ -359,9 +378,9 @@ Tells the browser that you wish to perform an animation and requests that the br
   func (ch *Change) Apply() {
     switch ch.Type {
     case "CREATE":
-      ch.create()
+      ...
     case "UPDATE":
-      ch.update()
+      ...
     }
   }
 
@@ -374,7 +393,6 @@ Tells the browser that you wish to perform an animation and requests that the br
   }
 
   for _, attr := range ch.NewNode.Attr {
-    log.Printf("setAttribute %s %s", attr.Key(), attr.Val())
     ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
   }
 
@@ -383,6 +401,7 @@ Tells the browser that you wish to perform an animation and requests that the br
   if ch.NewNode.Tag == TEXT_TYPE {
     content := ch.NewNode.Data
     for _, attr := range ch.NewNode.Attr {
+      // regexp for Label will be `{{ Label }}`
       re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, attr.Key()))
       content = re.ReplaceAllString(content, attr.Val())
     }
@@ -391,6 +410,8 @@ Tells the browser that you wish to perform an animation and requests that the br
   }
 
 * DEMO
+
+Components
 
 * What is not there
 
