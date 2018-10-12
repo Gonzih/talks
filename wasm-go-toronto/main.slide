@@ -1,5 +1,5 @@
 GOing to WASM?
-Should we be excited? What is possible?
+Building a frontend framework in Go!
 
 18 Oct 2018
 
@@ -23,8 +23,7 @@ gonzih@gmail.com
 * Why does it matter?
 
 - less JavaScript on the Web
-- less transpilers
-- almost native level of performance
+- close to native level of performance ******
 
 * Possibilities
 
@@ -185,6 +184,19 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 What about creating reactive frontend frameworking in golang? How hard can it be?
 
 [[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
+
+* Reactive framework
+
+- Get markup/dsl input
+- Create something that will manage our state
+- Create a component, configure props and handlers
+- Generate tree of elements
+-- Plug in dynamit/static attributes
+-- Plug in event handlers
+- Start rendering loop
+-- Generate VDOM out of tree of elements
+-- Diff VDOM against previous version to generate changes
+-- Apply changes to real dom
 
 * Use <template> tag as our templating solution
 
