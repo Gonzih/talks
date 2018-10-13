@@ -5,31 +5,30 @@ Building a frontend framework in Go!
 
 Max Gonzih
 
-[[https://gonzih.me][gonzih.me]]
+[[//gonzih.me][gonzih.me]]
 gonzih@gmail.com
 @Gonzih
 
 * What is WASM?
 
-.html tweaks.html
-
-.image webassembly.svg _ 800
+: who here knows what is web assembly?
 
 * What is WASM?
-- binary instruction format
-- stack-based VM
-- targeting web and server side deployments
 
-* Why does it matter?
+- a standard that defines binary instruction format
+- intended to be run on a stack machine
+- faster to parse and execute than JavaScript
+- can be used outside of the browser
 
-- less JavaScript on the Web
-- close to native level of performance ******
+.html tweaks.html
+
+.image webassembly.svg _ 600
 
 * Possibilities
 
 Using WebAssembly on a serverless platform
 
-[[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][https://blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
+[[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
 
 .image cloudflareworkers.png
 
@@ -37,25 +36,56 @@ Using WebAssembly on a serverless platform
 
 Kernel-space WebAssembly Runtime for Linux
 
-[[https://github.com/rianhunter/wasmjit][https://github.com/rianhunter/wasmjit]]
+[[https://github.com/rianhunter/wasmjit][github.com/rianhunter/wasmjit]]
+
+: runs WebAssembly modules in kernel-space
+: provides access to system calls as normal function calls
+: idea was to avoid user-kernel transition overhead
+: WASM is already becoming new assembly format
 
 .image wasmjit.png
+
+* Go on WASM
+
+* Why is this exciting?
+
+- Go is great
+- Go can be used to build web apps using existing ecosystem and tooling
+- Sharing logic between backend and frontend
+- Can target not just web browser
+
+: server side language going to the frontend
+: opposite direction compared to node.js for example
 
 * Running Go on WASM
 
 - Available since 1.11
 - Adds `GOOS=js` and `GOARCH=wasm` variables to the compiler
-- Interop is implemented using `syscall/js` package
 
+  GOARCH=wasm GOOS=js go build -o test.wasm
+
+- Interop is implemented using `syscall/js` package
 .image packagejs.png
 
-* Getting JS helper
+* Hello World time
 
-  curl "https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.js" > wasm_exec.js
+  package main
 
-Or
+  import "syscall/js"
+
+  func main() {
+    js.Global().Call("alert", "Hello Wasm!")
+  }
+
+: demo in hello-world folder
+: pretty simple, isn't it?
+
+* Getting JS and HTML helper files
+
+Can be found in go source source tree under `misc/wasm` directory
 
   cp $GOSRC/misc/wasm/wasm_exec.js wasm_exec.js
+  cp $GOSRC/misc/wasm/wasm_exec.html wasm_exec.html
 
 * JS helper
 
@@ -69,77 +99,16 @@ Or
     mem().setUint32(addr + 4, Math.floor(v / 4294967296), true);
   }
 
-* JS helper
-
-`wasm_exec.js`
-
-- Sets up funcs from `syscall/js` pagkage on Go side
+- Defines funcs from `syscall/js` package from JS side
 
   // func valueGet(v ref, p string) ref
   "syscall/js.valueGet": (sp) => {
     storeValue(sp + 32, Reflect.get(loadValue(sp + 8), loadString(sp + 16)));
   },
 
-
-* Getting HTML template
-
-  curl "https://raw.githubusercontent.com/golang/go/go1.11/misc/wasm/wasm_exec.html" > wasm_exec.html
-
-Or
-
-  cp $GOSRC/misc/wasm/wasm_exec.html wasm_exec.html
-
-* Getting HTML template
-
-`wash_exec.html` Demonstrates how to put this together
-
-- on JS side
-
-  const go = new Go();
-  // ...
-  WebAssembly.instantiateStreaming(url).then((result) => {
-      mod = result.module;
-      inst = result.instance;
-
-  });
-
-  async function run() {
-    await go.run(inst);
-    // ...
-  }
-
-- and HTML side
-
-  <button onClick="run();" id="runButton" disabled>Run</button>
-
-* Hello World time
-
-  package main
-
-  import "syscall/js"
-
-  func main() {
-    js.Global().Call("alert", "Hello Wasm!")
-  }
-
-* Compiling it
-
-  GOARCH=wasm GOOS=js go build -o test.wasm
-
 * Running it
 
-Well, *test.wasm* needs to be loaded with Content-Type header set to *application/wasm*
-
-What shall we do?
-
-* Let's put together small file server
-
-  package main
-
-  import (
-    "log"
-    "net/http"
-  )
+*test.wasm* needs to be served with Content-Type header set to *application/wasm*
 
   func wasmHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/wasm")
@@ -153,23 +122,18 @@ What shall we do?
     log.Fatal(http.ListenAndServe(":3000", mux))
   }
 
-* DEMO
-
-Hello World
-
 * The Future is here
 
 .image wasm-corp.png _ 800
 
+* It works!
 
-* Should we be excited?
-
-Yes, but...
-
-* File size 😕
+Yes, but... file size 😕
 
   $ l -lha test.wasm
   -rwxr-xr-x 1 gnzh gnzh 2.4M Sep 15 09:13 test.wasm*
+
+: a lot for a binary format that suppose to be compact
 
 * Why?
 
@@ -179,36 +143,51 @@ Yes, but...
 
 More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
 
-* Going crazy
+* Building a frontend framework
 
-What about creating reactive frontend frameworking in golang? How hard can it be?
-
-[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
+: who here actually used vue.js and/or react.js
 
 * Reactive framework
 
-- Get markup/dsl input
-- Create something that will manage our state
-- Create a component, configure props and handlers
-- Generate tree of elements
--- Plug in dynamit/static attributes
--- Plug in event handlers
-- Start rendering loop
--- Generate VDOM out of tree of elements
--- Diff VDOM against previous version to generate changes
--- Apply changes to real dom
+  - DSL/Markup format
+  - State managment
+  - Component creation API
+  -- Configure computed properties
+  -- Configure event handlers
 
-* Use <template> tag as our templating solution
+  - Generate tree of elements
+  -- get template inner html
+  -- parse html
+  -- create dynamic attributes
+  -- create event handlers
+  -- handle text nodes
+
+  - Attach component to DOM tree
+  -- Start rendering loop
+  --- Generate VDOM out of tree of elements
+  --- Diff VDOM against previous version to generate changes
+  --- Apply changes to the DOM tree
+
+#[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
+
+* Makup format
 
     <template id="rootTemplate">
         <div>
             <span :class="LabelClass">Clicked {{ Count }} times</span>
-            <input type="button" value="♡" @click="ClickHandler"></input>
-            <br/>
+            <input type="button" value="Click Me" @click="ClickHandler"></input>
         </div>
     </template>
 
-* State stored in Store
+- computed poperties
+  :class="LabelClass" and {{ Count }}
+- event handlers
+  @click="ClickHandler"
+
+: we have to define html of our components in some way
+: in this example we are going to use <template> tag
+
+* State managment
 
   type Store struct {
     store map[string]interface{}
@@ -227,11 +206,11 @@ What about creating reactive frontend frameworking in golang? How hard can it be
   }
 
 
-* Create a new component
+* Component creation API
 
   store := NewStore()
 
-  methods := map[string]func(js.Value){
+  handlers := map[string]func(js.Value){
     "ClickHandler": func(event js.Value) {
       // ...
     },
@@ -243,11 +222,11 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     },
   }
 
-  cmp := NewComponent("rootTemplate", methods, computed)
+  cmp := NewComponent("rootTemplate", handlers, computed)
   store.Subscribe(cmp.notificationChan)
   cmp.MountTo("root")
 
-* Computed properties
+* Configure computed properties
 
   computed := map[string]func() string{
     "Counter": func() string {
@@ -255,22 +234,14 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     },
   }
 
-* Component methods
+* Configure event handlers
 
-  methods := map[string]func(js.Value){
+  handlers := map[string]func(js.Value){
     "ClickHandler": func(event js.Value) {
       c := store.Get("counter").(int)
       store.Set("counter", c+1)
     },
   }
-
-* NewComponent function
-
-  cmp := NewComponent("rootTemplate", methods, computed)
-
-- Get template Inner HTML
-- Parse HTML in to tree of elements
-
 * Get template Inner HTML
   // Go
   js.Global().Get("document").Call("getElementById", templateID).Get("innerHTML").String()
@@ -278,8 +249,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
   // JavaScript
   document.getElementById(templateID).innerHTML
 
-
-* Parse HTML in to tree of elements
+* Parse HTML
 
     r := strings.NewReader(templateData)
     z := html.NewTokenizer(r)
@@ -292,6 +262,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
       for _, attr := range token.Attr {
         // ...
       }
+      el.Children = parseChildren(el, z)
     }
 
 * Dynamic attributes
@@ -324,8 +295,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
     el.Children = append(parent.Children, child)
 
-* Dynamic attributes in text nodes
-
+  // ...
   // <span>This is a template for {{ Name }}</span>
 
   for k, fn := range c.Computed {
@@ -345,7 +315,7 @@ What about creating reactive frontend frameworking in golang? How hard can it be
   cmp := NewComponent("rootTemplate", methods, computed)
   cmp.MountTo("root")
 
-* Rendering Loop
+* Start rendering Loop
 
   func (cmp *Component) MountTo(rootID string) {
     cmp.RenderTo(rootID)
@@ -362,11 +332,11 @@ What about creating reactive frontend frameworking in golang? How hard can it be
     }
   }
 
-* window.requestAnimationFrame()
+window.requestAnimationFrame()
 
 Tells the browser that we wish to perform an animation and requests that the browser call a specified function before the next repaint.
 
-* RenderTo function
+* Diff VDOM against previous version
 
   func (cmp *Component) RenderTo(rootID string) {
     changes := make([]Change, 0)
@@ -374,38 +344,29 @@ Tells the browser that we wish to perform an animation and requests that the bro
     vdom.Diff(component.OldVDom, &changes, rootID)
     // ...
 
-* Diff
+Diff logic
+- CREATE change: If no old version of VDOM is prenent
+- UPDATE change: otherwise diff properties
 
-- If no old version of VDOM is prenent -> gerenare CREATE Change
-- Otherwise diff properties and create UPDATE Change
-
-* Applying changes
-
-  for _, change := range changes {
-    change.Apply()
-  }
+Diffing properties
+- All properties that are not present in new VDOM need to be deleted
+- All properties value of which has changed need to be updated
 
 * Applying changes
 
-  func (ch *Change) Apply() {
+  for _, ch := range changes {
     switch ch.Type {
     case "CREATE":
-      // ...
+      ch.parentNode.Call("appendChild", ch.domNode)
     case "UPDATE":
-      // ...
+      for _, attrName := range ch.attributesToDelete {
+        ch.domNode.Call("removeAttribute", attrName)
+      }
+
+      for _, attr := range ch.attributesToUpdate {
+        ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
+      }
     }
-  }
-
-* CREATE change
-  ch.parentNode.Call("appendChild", ch.domNode)
-
-* UPDATE change
-  for _, attrName := range ch.attributesToDelete {
-    ch.domNode.Call("removeAttribute", attrName)
-  }
-
-  for _, attr := range ch.NewNode.Attr {
-    ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
   }
 
 * UPDATE change for text nodes
@@ -422,8 +383,6 @@ Tells the browser that we wish to perform an animation and requests that the bro
   }
 
 * DEMO
-
-Components
 
 * What is not there
 

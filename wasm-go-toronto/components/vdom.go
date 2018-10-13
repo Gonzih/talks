@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"syscall/js"
 )
@@ -121,19 +122,35 @@ func (newVD *VNode) Diff(oldVD *VNode, changeset *[]Change, rootID string, paren
 		}
 	}
 
-	*changeset = append(*changeset, Change{
-		Type:               "UPDATE",
-		domNode:            *oldVD.domNode,
-		attributesToDelete: attributesToDelete,
-		NewNode:            newVD,
-	})
+	attributesToUpdate := make([]HTMLAttribute, 0)
+
+OUTER:
+	for _, newAttr := range newVD.Attr {
+		for _, oldAttr := range oldVD.Attr {
+			if newAttr.Key() == oldAttr.Key() {
+				log.Printf("Comparing %s=%s and %s=%s", newAttr.Key(), newAttr.Val(), oldAttr.Key(), oldAttr.Val())
+				if newAttr.Val() != oldAttr.Val() {
+					log.Printf("Found changed attribute %#v", newAttr)
+					attributesToUpdate = append(attributesToUpdate, newAttr)
+				}
+				continue OUTER
+			}
+		}
+		log.Printf("end of the loop")
+		attributesToUpdate = append(attributesToUpdate, newAttr)
+	}
+
+	if len(attributesToUpdate) > 0 || len(attributesToDelete) > 0 {
+		*changeset = append(*changeset, Change{
+			Type:               "UPDATE",
+			domNode:            *oldVD.domNode,
+			attributesToDelete: attributesToDelete,
+			attributesToUpdate: attributesToUpdate,
+			NewNode:            newVD,
+		})
+	}
 
 	newVD.DiffChildren(oldVD, changeset, rootID, *oldVD.domNode)
-
-	// go over children
-	// figure out which ones are new
-	// figure out which ones need to be deleted
-	// figure out which ones are old
 }
 
 func (newVD *VNode) DiffChildren(oldVD *VNode, changeset *[]Change, rootID string, parentNode js.Value) {

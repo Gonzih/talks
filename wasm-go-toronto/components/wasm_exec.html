@@ -22,18 +22,19 @@ span.large {
 </head>
 
 <body>
-    <hr/>
 
     <div id="root0"></div>
+    <br/>
     <div id="root1"></div>
+    <br/>
     <div id="root2"></div>
-
-    <hr/>
+    <br/>
 
     <template id="rootTemplate">
         <div>
             <span :class="LabelClass">Clicked {{ Count }} times</span>
-            <input type="button" value="♡" @click="ClickHandler"></input>
+            &nbsp;
+            <input type="button" value="Click Me" @click="ClickHandler"></input>
             <br/>
         </div>
     </template>

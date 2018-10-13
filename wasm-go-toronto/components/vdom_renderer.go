@@ -6,7 +6,13 @@ type VDomRenderer struct {
 func (rr *VDomRenderer) Render(el *El) (*VNode, error) {
 	node := &VNode{}
 
-	node.Attr = el.Attr
+	for _, attr := range el.Attr {
+		node.Attr = append(node.Attr, &StaticAttribute{
+			K: attr.Key(),
+			V: attr.Val(),
+		})
+	}
+
 	node.Callbacks = el.Callbacks
 
 	switch el.Type {

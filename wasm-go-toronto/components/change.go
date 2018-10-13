@@ -14,6 +14,7 @@ type Change struct {
 	domNode            js.Value
 	parentNode         js.Value
 	attributesToDelete []string
+	attributesToUpdate []HTMLAttribute
 }
 
 func (ch *Change) Apply() {
@@ -46,7 +47,7 @@ func (ch *Change) update() {
 		ch.domNode.Call("removeAttribute", attrName)
 	}
 
-	for _, attr := range ch.NewNode.Attr {
+	for _, attr := range ch.attributesToUpdate {
 		log.Printf("setAttribute %s %s", attr.Key(), attr.Val())
 		ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
 	}

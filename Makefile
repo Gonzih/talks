@@ -1,2 +1,2 @@
 run:
-	present
+	present -notes
