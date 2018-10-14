@@ -81,15 +81,18 @@ Kernel-space WebAssembly Runtime for Linux
 : demo in hello-world folder
 : any interactions with js from go side happens around js.Value type
 : js.Global() returns js.Value
-: Call method of js.Value also returns js.Value
+: we are using Call function to call method of this particular js object
 : pretty simple, isn't it?
+: but there is a lot of things going on behind the scene
 
 * Getting JS and HTML helper files
 
 Can be found in go source source tree under `misc/wasm` directory
 
-  cp $GOSRC/misc/wasm/wasm_exec.js wasm_exec.js
   cp $GOSRC/misc/wasm/wasm_exec.html wasm_exec.html
+  cp $GOSRC/misc/wasm/wasm_exec.js wasm_exec.js
+
+: wasm_exec.html just showcases how entire thing is put together
 
 * JS helper
 
@@ -110,6 +113,9 @@ Can be found in go source source tree under `misc/wasm` directory
     storeValue(sp + 32, Reflect.get(loadValue(sp + 8), loadString(sp + 16)));
   },
 
+: why does it have to setup js -> go interop
+: because big chunk of syscall/js is implemented on js side
+
 * Running it
 
 *test.wasm* needs to be served with Content-Type header set to *application/wasm*
@@ -126,6 +132,9 @@ Can be found in go source source tree under `misc/wasm` directory
     log.Fatal(http.ListenAndServe(":3000", mux))
   }
 
+: we have to create our own http serve
+: wasm files can't be loaded from disk
+
 * The Future is here
 
 .image wasm-corp.png _ 800
@@ -138,16 +147,17 @@ Yes, but... file size 😕
   -rwxr-xr-x 1 gnzh gnzh 2.4M Sep 15 09:13 test.wasm*
 
 : a lot for a binary format that suppose to be compact
+: for a hello world example
 
 * Why?
 
 - WASM is a stack mahcine. Go has to maintain its own stack (GC)
-- No GOTO instruction, so Go has to generate a huge switch statement to resume goroutines
+- No GOTO instruction, so Go has to generate huge switch statements to resume goroutines
 - Binary size was not a priority for this release
 
 More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
 
-:check out greta document that outlines technical design decisions that went in to current wasm implementation
+: check out greta document that outlines technical design decisions that went in to current wasm implementation
 
 * Building a frontend framework
 
@@ -162,7 +172,7 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 - Create a component
 - Attach component to DOM tree
 
-: moving pieces of a framework like that
+: moving pieces of a framework
 : Markup format/DSL = how elements will be configured
 : State managment = how are we going to handle state (global/local/properties)
 : Create a component = configure properties + event handlers + attaching component to state manager
@@ -171,7 +181,7 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 
 #[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
 
-* Makup format
+* Markup format
 
     <template id="rootTemplate">
         <div>
@@ -180,7 +190,7 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
         </div>
     </template>
 
-- computed poperties
+- computed properties
   :class="LabelClass" and {{ Count }}
 - event handlers
   @click="ClickHandler"
@@ -212,18 +222,20 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 - Configure event handlers
 - Attach component to our state
 
+: to create a component we will have to do following steps
+
 * Create a component
 
   store := NewStore()
 
-  handlers := map[string]func(js.Value){
-    "ClickHandler": func(event js.Value) {
+  computed := map[string]func() string{
+    "Counter": func() string {
       // ...
     },
   }
 
-  computed := map[string]func() string{
-    "Counter": func() string {
+  handlers := map[string]func(js.Value){
+    "ClickHandler": func(event js.Value) {
       // ...
     },
   }
@@ -375,7 +387,7 @@ Using `net/html` package
   cmp := NewComponent("rootTemplate", methods, computed)
   cmp.MountTo("root")
 
-:if you recall this is how we are creating our component
+: if you recall this is how we are creating our component
 
 * Start rendering Loop
 
