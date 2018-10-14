@@ -29,11 +29,11 @@ func newCmp() *Component {
 		},
 		"LabelClass": func() string {
 			c := store.Get("counter").(int)
-			if c < 10 {
-				return "small"
+			if c%2 == 0 {
+				return "even"
 			}
 
-			return "large"
+			return "odd"
 		},
 	}
 

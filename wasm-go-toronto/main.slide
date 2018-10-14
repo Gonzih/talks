@@ -32,6 +32,8 @@ Using WebAssembly on a serverless platform
 
 .image cloudflareworkers.png
 
+: people already started experimenting with webassembly support in different use cases
+
 * Possibilities
 
 Kernel-space WebAssembly Runtime for Linux
@@ -41,7 +43,6 @@ Kernel-space WebAssembly Runtime for Linux
 : runs WebAssembly modules in kernel-space
 : provides access to system calls as normal function calls
 : idea was to avoid user-kernel transition overhead
-: WASM is already becoming new assembly format
 
 .image wasmjit.png
 
@@ -78,6 +79,9 @@ Kernel-space WebAssembly Runtime for Linux
   }
 
 : demo in hello-world folder
+: any interactions with js from go side happens around js.Value type
+: js.Global() returns js.Value
+: Call method of js.Value also returns js.Value
 : pretty simple, isn't it?
 
 * Getting JS and HTML helper files
@@ -143,30 +147,27 @@ Yes, but... file size 😕
 
 More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
 
+:check out greta document that outlines technical design decisions that went in to current wasm implementation
+
 * Building a frontend framework
 
-: who here actually used vue.js and/or react.js
+: disclaimer: this is not going to be a production ready framework by any means
+: it wont even be that useful to be fair :)
+: who here used vue.js and/or react.js?
 
 * Reactive framework
 
-  - DSL/Markup format
-  - State managment
-  - Component creation API
-  -- Configure computed properties
-  -- Configure event handlers
+- Markup format/DSL
+- State managment
+- Create a component
+- Attach component to DOM tree
 
-  - Generate tree of elements
-  -- get template inner html
-  -- parse html
-  -- create dynamic attributes
-  -- create event handlers
-  -- handle text nodes
-
-  - Attach component to DOM tree
-  -- Start rendering loop
-  --- Generate VDOM out of tree of elements
-  --- Diff VDOM against previous version to generate changes
-  --- Apply changes to the DOM tree
+: moving pieces of a framework like that
+: Markup format/DSL = how elements will be configured
+: State managment = how are we going to handle state (global/local/properties)
+: Create a component = configure properties + event handlers + attaching component to state manager
+: Attach component to dom = start rendering loop, generate virtual dom, diff virtual dom to generate changes and apply changes to real dom tree
+: idea of framework like that is to minimize amount of interactions that will happen with dom in the browser
 
 #[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
 
@@ -174,7 +175,7 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 
     <template id="rootTemplate">
         <div>
-            <span :class="LabelClass">Clicked {{ Count }} times</span>
+            <span :class="LabelClass">Clicked me {{ Count }}</span>
             <input type="button" value="Click Me" @click="ClickHandler"></input>
         </div>
     </template>
@@ -205,8 +206,13 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
     // ...
   }
 
+* Create a component
 
-* Component creation API
+- Configure computed properties
+- Configure event handlers
+- Attach component to our state
+
+* Create a component
 
   store := NewStore()
 
@@ -229,10 +235,21 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 * Configure computed properties
 
   computed := map[string]func() string{
-    "Counter": func() string {
-      return fmt.Sprintf("Clicked me %d times", store.Get("counter"))
+    "Count": func() string {
+      return fmt.Sprintf("%d times", store.Get("counter"))
+    },
+    "LabelClass": func() string {
+      c := store.Get("counter").(int)
+      if c%2 == 0 {
+        return "even"
+      }
+      return "odd"
     },
   }
+
+: properties are just functions that return string
+: properties will be stored in a hashmap for the sake of simplicity
+: but same can be done using Reflections
 
 * Configure event handlers
 
@@ -242,14 +259,33 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
       store.Set("counter", c+1)
     },
   }
-* Get template Inner HTML
+
+: event handlers: hash map of functions
+: function will reseave js event as js.Value type
+
+* Generate tree of elements
+
+- Get HTML markup from <template>
+- Parse HTML
+- Create reactive elements for every tag
+- Create dynamic attributes
+- Create event handlers
+
+: component creation is just our configuration layer
+: now we need to generate intermidiate representation for tree of elements
+
+* Get HTML markup from <template>
   // Go
   js.Global().Get("document").Call("getElementById", templateID).Get("innerHTML").String()
 
   // JavaScript
   document.getElementById(templateID).innerHTML
 
+: working with infamous js.Value
+: String method of js.Value will convert value to a string according to javascript string conversion rules
+
 * Parse HTML
+Using `net/html` package
 
     r := strings.NewReader(templateData)
     z := html.NewTokenizer(r)
@@ -262,58 +298,84 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
       for _, attr := range token.Attr {
         // ...
       }
-      el.Children = parseChildren(el, z)
+      el.Children = parseChildren(z)
+    case tt == html.EndTagToken:
+      return el
     }
 
-* Dynamic attributes
+: tokenizers allows us to iterate over html Tokens
+: we will wait for StartTagToken which will indicate that this is html opening tag
+: extract token data (which is token tag basically)
+: recursively parse all children untill
+: once we reach EndTagtoken just return newly created element
+: this is similar approach to reacts idea that everything is a component
+
+* Creat dynamic attributes
 
   for _, attr := range token.Attr {
     if strings.HasPrefix(attr.Key, ":") {
-      element.Attr = append(
-        element.Attr,
+      el.Attr = append(
+        el.Attr,
         &DynamicAttribute{
           K:  strings.Replace(attr.Key, ":", "", 1),
           Fn: handler,
         })
     }
-
   }
 
-* Event handlers
+: We are going to have static and dynamit attribute types
+: computed properties will be converted in to dynamit attributes
+: everything else is going to be a static attribute
+
+* Creat event handlers
 
   for _, attr := range token.Attr {
     if strings.HasPrefix(attr.Key, "@") {
       callback := js.NewEventCallback(js.PreventDefault, method)
-      // ...
+      k := strings.Replace(attr.Key, "@", "", 1),
+      el.Handlers[k] = callback
     }
   }
+
+: wrap golang functions in to Callback type from syscall/js package
+: we will also set prevent default to true by default
 
 * Handle text nodes
 
   case tt == html.TextToken:
     t := z.Token()
-    child := &El{Type: TEXT_TYPE, NodeValue: t.Data}
-    el.Children = append(parent.Children, child)
+    el := &El{Type: TEXT_TYPE, NodeValue: t.Data}
+    // ...
 
-  // ...
-  // <span>This is a template for {{ Name }}</span>
-
-  for k, fn := range c.Computed {
+  // <span>This is an example template for {{ Name }}</span>
+  for k, fn := range component.Computed {
     re := regexp.MustCompile(fmt.Sprintf(`\{\{\s*%s\s*\}\}`, k))
-    if re.MatchString(child.NodeValue) {
+    if re.MatchString(el.NodeValue) {
       at := &DynamicAttribute{
         K:  k,
         Fn: fn,
       }
-      child.Attr = append(child.Attr, at)
+      el.Attr = append(el.Attr, at)
     }
   }
 
+: text nodes are edge case that we will have to handle
+: for now we will extract raw data (text + templating) and store in to our element
+: we also are going to look at template of this node trying to figure out which DynamitAttributes it will need for later
+
+* Attaching component to DOM
+
+- Start rendering loop
+- Generate Virtual DOM (VDOM)
+- Diff VDOM to generate set of changes
+- Apply changes to the DOM tree
 
 * Attaching component to DOM
 
   cmp := NewComponent("rootTemplate", methods, computed)
   cmp.MountTo("root")
+
+:if you recall this is how we are creating our component
 
 * Start rendering Loop
 
@@ -336,6 +398,10 @@ window.requestAnimationFrame()
 
 Tells the browser that we wish to perform an animation and requests that the browser call a specified function before the next repaint.
 
+: more efficient way to schedule rendering in a browser
+: this approach can reduce ui freeze on a web page
+: can be made even more efficient by respecting time limit that requestAnimationFrame will give to our function
+
 * Diff VDOM against previous version
 
   func (cmp *Component) RenderTo(rootID string) {
@@ -345,12 +411,12 @@ Tells the browser that we wish to perform an animation and requests that the bro
     // ...
 
 Diff logic
-- CREATE change: If no old version of VDOM is prenent
-- UPDATE change: otherwise diff properties
+- *CREATE* change: if no old version of VDOM is prenent
+- *UPDATE* change: otherwise diff properties
 
 Diffing properties
-- All properties that are not present in new VDOM need to be deleted
-- All properties value of which has changed need to be updated
+- All properties that are not present in new VDOM version need to be *deleted*
+- All properties value of which has changed need to be *updated*
 
 * Applying changes
 
@@ -366,6 +432,8 @@ Diffing properties
       for _, attr := range ch.attributesToUpdate {
         ch.domNode.Call("setAttribute", attr.Key(), attr.Val())
       }
+
+      //...
     }
   }
 
@@ -384,12 +452,13 @@ Diffing properties
 
 * DEMO
 
-* What is not there
+* What is not implemented in this demo
 
 - Nested components
 - No branching in DSL (if-else)
 - No loops in DSL
-- This is just a demo :)
+- Not handling removed nodes or change of the order
+- A lot of edge cases
 
 * Conclusion
 
@@ -398,6 +467,7 @@ Go on WASM
 - It works
 - It's not perfect
 - Please give it a try!
-- Yay!
+
+[[https://github.com/Gonzih/talks/tree/master/wasm-go-toronto][github.com/Gonzih/talks]]
 
 # vim: ts=2:sts=2:sw=2:expandtab
