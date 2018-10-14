@@ -50,8 +50,8 @@ Kernel-space WebAssembly Runtime for Linux
 
 * Why is this exciting?
 
-- Go is great
 - Go can be used to build web apps using existing ecosystem and tooling
+- Backend language on a frontend
 - Sharing logic between backend and frontend
 - Can target not just web browser
 
