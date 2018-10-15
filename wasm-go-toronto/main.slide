@@ -1,4 +1,5 @@
 GOing to WASM?
+
 Building a frontend framework in Go!
 
 18 Oct 2018
@@ -24,6 +25,8 @@ gonzih@gmail.com
 
 .html tweaks.html
 
+.caption _What_is_WASM?_
+
 * Possibilities
 
 Using WebAssembly on a serverless platform
@@ -31,6 +34,8 @@ Using WebAssembly on a serverless platform
 [[https://blog.cloudflare.com/webassembly-on-cloudflare-workers/][blog.cloudflare.com/webassembly-on-cloudflare-workers/]]
 
 .image cloudflareworkers.png
+
+.caption _What_is_WASM?_
 
 : people already started experimenting with webassembly support for different use cases
 
@@ -44,6 +49,8 @@ Kernel-space WebAssembly Runtime for Linux
 : provides access to system calls as normal function calls
 
 .image wasmjit.png
+
+.caption _What_is_WASM?_
 
 * Go on WASM
 
@@ -61,6 +68,8 @@ Kernel-space WebAssembly Runtime for Linux
 : server side language going to the frontend
 : opposite direction compared to node.js for example
 
+.caption _Go_on_WASM_
+
 * Running Go on WASM
 
 - Available since 1.11
@@ -71,6 +80,8 @@ Kernel-space WebAssembly Runtime for Linux
 - Interop with JavaScript is implemented using `syscall/js` package
 .image packagejs.png
 
+.caption _Go_on_WASM_
+
 * Hello World time
 
   package main
@@ -80,6 +91,8 @@ Kernel-space WebAssembly Runtime for Linux
   func main() {
     js.Global().Call("alert", "Hello Wasm!")
   }
+
+.caption _Go_on_WASM_
 
 : demo in hello-world folder
 : any interactions with js from go side happens around js.Value type
@@ -96,6 +109,8 @@ Can be found in go source tree under `misc/wasm` directory
   cp $GOSRC/misc/wasm/wasm_exec.js wasm_exec.js
 
 : wasm_exec.html just showcases how entire thing is put together
+
+.caption _Go_on_WASM_
 
 * JS helper
 
@@ -116,6 +131,8 @@ Can be found in go source tree under `misc/wasm` directory
     storeValue(sp + 32, Reflect.get(loadValue(sp + 8), loadString(sp + 16)));
   },
 
+.caption _Go_on_WASM_
+
 : why does it have to setup js -> go interop
 : because big chunk of syscall/js is implemented on js side
 
@@ -135,6 +152,8 @@ Can be found in go source tree under `misc/wasm` directory
     log.Fatal(http.ListenAndServe(":3000", mux))
   }
 
+.caption _Go_on_WASM_
+
 : we have to create our own http serve
 : wasm files can't be loaded from disk
 
@@ -142,12 +161,16 @@ Can be found in go source tree under `misc/wasm` directory
 
 .image wasm-corp.png _ 800
 
+.caption _Go_on_WASM_
+
 * It works!
 
 Yes, but... file size 😕
 
   $ l -lha test.wasm
   -rwxr-xr-x 1 gnzh gnzh 2.4M Sep 15 09:13 test.wasm*
+
+.caption _Go_on_WASM_
 
 : a lot for a binary format that suppose to be compact
 : for a hello world example
@@ -159,6 +182,8 @@ Yes, but... file size 😕
 - Binary size was not a priority for this release
 
 More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0_Nv3OUwjEY5qVCxCup4/edit][WebAssembly architecture for GO]]
+
+.caption _Go_on_WASM_
 
 : check out greta document that outlines technical design decisions that went in to current wasm implementation
 
@@ -527,6 +552,8 @@ Diffing properties
 - No loops in markup
 - Not handling removed nodes or change of order
 - A lot of edge cases
+
+.caption _Reactive_framework_
 
 * Conclusion
 
