@@ -204,12 +204,13 @@ More Information: [[https://docs.google.com/document/d/131vjr4DH6JFnb-blm_uRdaC0
 
 .caption _Reactive_framework_
 
+: idea of framework like that is to minimize amount of interactions with the DOM
+: dom interactions are slow since they require a lot of work in the browser
 : moving pieces of a framework
 : Markup format/DSL = how elements will be configured
 : State managment = how are we going to handle state (global/local/properties)
 : Instantiation of a component = configure properties + event handlers + attaching component to state manager
 : Rendering loop = start rendering loop, generate virtual dom, diff virtual dom to generate changes and apply changes to real dom tree
-: idea of framework like that is to minimize amount of interactions that will happen with dom in the browser
 
 #[[https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5][Didact: a DIY guide to build your own React (JS)]]
 
